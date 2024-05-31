@@ -69,14 +69,14 @@ app.MapPost("api/logservice", async ( Stream logFile, HttpContext httpContext, I
 });
 
 
-app.MapPost("/api/auth/token2", (UserCredential credentials, IManager manager) =>
+app.MapPost("/api/auth/token", (UserCredential credentials, IManager manager) =>
 {
     // Verifica las credenciales del usuario
     if ( manager.ValidateUser(credentials))
     {
         // Genera y retorna el token
         var token = manager.GenerateToken(credentials.UserName);
-        return Results.Ok( new { Token = token } );
+        return Results.Ok(new { Token = token });
     }
     return Results.Unauthorized();
 });

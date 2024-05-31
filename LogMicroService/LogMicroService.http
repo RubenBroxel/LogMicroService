@@ -1,4 +1,4 @@
-@LogMicroService_HostAddress = http://10.100.8.5:5084
+@LogMicroService_HostAddress = http://10.100.8.5:8080
 
 GET {{LogMicroService_HostAddress}}/weatherforecast/
 Accept: application/json
