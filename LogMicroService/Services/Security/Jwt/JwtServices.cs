@@ -42,13 +42,21 @@ public  class JwtService: IJwtSecurity
         }
     }
 
-    public bool IsValidUser(UserCredential credentials)
+    public bool IsValidUser(AccountModelService credentials)
     {
         bool valid;
         // Lógica para validar las credenciales del usuario
         // Aquí puedes realizar la autenticación contra una base de datos u otro método
         // en este metodo podria hacer consulta a base de datos para validar usuario
-        if (credentials.UserName == "John Tobbias" && credentials.Password == "1234" )
+        if (credentials.AppService == "Fintech.Logger.Services.Account" && 
+            !String.IsNullOrEmpty( credentials.AppToken)      && 
+            !String.IsNullOrEmpty( credentials.AppBuild)      && 
+            !String.IsNullOrEmpty( credentials.AppPackage)    && 
+            !String.IsNullOrEmpty( credentials.AppVersion)    && 
+            !String.IsNullOrEmpty( credentials.AppPackage)    &&
+            !String.IsNullOrEmpty( credentials.AppIpAddress ) &&
+            !String.IsNullOrEmpty( credentials.AppLocation) 
+            )
         {
             valid = true;
         }else
@@ -56,6 +64,6 @@ public  class JwtService: IJwtSecurity
             valid = false;
         }
 
-        return valid;//credentials.Username == "John Tobbias" && credentials.Password == "1234";
+        return valid;
     }
 }

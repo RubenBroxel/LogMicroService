@@ -4,12 +4,14 @@
     Description: clase principal para funcionamiento del micro-servicio 
 */
 using System.Security.Claims;
+//using LogMicroServices.Services.GCP;
+
 
 public class ManagerService: IManager
 {
     private readonly IFileServices _fileServices;
     private readonly IGcpServices  _gcpServices;
-    private readonly IJwtSecurity _jwtSecurity2;
+    private readonly IJwtSecurity _jwtSecurity;
     private readonly IPermissionServices _permissionService;
     
     private readonly string MESSAGE_ERROR_FALTAL = "Upps!, Algo Orurrio...";
@@ -17,11 +19,11 @@ public class ManagerService: IManager
     private readonly string SECRET_BASE64_VALID  = "eyJhbGciOiJSUzI1NiIsImtpZCI6IlRlc3RDZXJ0IiwidHlwIjoiYXQrand0In0=";
 
 
-    public ManagerService(IFileServices fileServices, IGcpServices gcpServices, IJwtSecurity jwtSecurity2, IPermissionServices permissionServices)
+    public ManagerService(IFileServices fileServices, IGcpServices gcpServices, IJwtSecurity jwtSecurity, IPermissionServices permissionServices)
     {
         _fileServices = fileServices;
         _gcpServices  = gcpServices;
-        _jwtSecurity2 = jwtSecurity2;
+        _jwtSecurity = jwtSecurity;
         _permissionService = permissionServices;
     }
 
@@ -35,6 +37,10 @@ public class ManagerService: IManager
     /// <returns>MESSAGE_ERROR_FATAL</returns>
     public async Task<string> SendToBucketAsync(Stream fileStream, GcpLogFile gcpLogFile, LogFile logFile)
     {  
+            // Reemplaza con tus valores
+            //GcpLogger logger = new GcpLogger("crack-adapter-420721", "My-First-Project");
+            //GcpLogger logger = new GcpLogger(projectId, logName);
+
         try
         {
             string tempfile  = _fileServices.CreateTempfilePath(logFile.FileName,logFile.filePath);
@@ -58,9 +64,9 @@ public class ManagerService: IManager
     /// </summary>
     /// <param name="credentials"></param>
     /// <returns>Bool</returns>
-    public bool ValidateUser(UserCredential credentials)
+    public bool ValidateUser(AccountModelService credentials)
     {
-        return _jwtSecurity2.IsValidUser(credentials);
+        return _jwtSecurity.IsValidUser(credentials);
     }
 
 
@@ -71,7 +77,7 @@ public class ManagerService: IManager
     /// <returns>string</returns>
     public string GenerateToken(string userName)
     {
-         return _jwtSecurity2.GenerateToken( userName, SECRET_BASE64_VALID);
+         return _jwtSecurity.GenerateToken( userName, SECRET_BASE64_VALID);
     }
 
     public ClaimsPrincipal ValidateAToken(string token)

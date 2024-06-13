@@ -35,6 +35,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.MapGet("/health", async (HttpContext context) => await context.Response.WriteAsync("Ok")).ShortCircuit();
+
+
 app.UseHttpsRedirection();
 
 
@@ -69,13 +72,13 @@ app.MapPost("api/logservice", async ( Stream logFile, HttpContext httpContext, I
 });
 
 
-app.MapPost("/api/auth/token", (UserCredential credentials, IManager manager) =>
+app.MapPost("/api/auth/token", (AccountModelService credentials, IManager manager) =>
 {
     // Verifica las credenciales del usuario
     if ( manager.ValidateUser(credentials))
     {
         // Genera y retorna el token
-        var token = manager.GenerateToken(credentials.UserName);
+        var token = manager.GenerateToken(credentials.AppService);
         return Results.Ok(new { Token = token });
     }
     return Results.Unauthorized();
