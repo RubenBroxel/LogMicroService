@@ -4,7 +4,12 @@ using Microsoft.IdentityModel.Tokens;
 
 public class PermissionServices:IPermissionServices
 {
-    
+    private readonly IConfiguration _configuration;
+
+    public PermissionServices( IConfiguration configuration)
+    {
+        _configuration = configuration;
+    }
     public ClaimsPrincipal GetPrincipal(string token, string secret)
     {
         try
@@ -16,7 +21,7 @@ public class PermissionServices:IPermissionServices
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKey = new SymmetricSecurityKey(key),
                 ValidateIssuer = false,
-                ValidateAudience = false
+                ValidateAudience = false, 
             };
             var principal = tokenHandler.ValidateToken(token, parameters, out _);
             return principal;

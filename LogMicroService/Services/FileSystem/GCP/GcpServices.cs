@@ -6,12 +6,18 @@ using Google.Cloud.Storage.V1;
 
 public class GcpServices : IGcpServices
 {
+    private readonly IConfiguration _configuration;
+    public GcpServices(IConfiguration configuration)
+    {
+        _configuration = configuration;
+    }
+
     public async Task SendToGcpBucketAsync(GcpLogFile logFile)
     {
         // Explicitly use service account credentials by specifying the private key file.
         // The service account should have Object Manage permissions for the bucket.
-        GoogleCredential credential = null;
-        using (var jsonStream = new FileStream( logFile.GcpCredential, FileMode.Open, FileAccess.Read, FileShare.Read))
+        GoogleCredential credential;
+        using (var jsonStream = new FileStream( logFile.GcpCredential ?? "", FileMode.Open, FileAccess.Read, FileShare.Read))
         {
             credential = GoogleCredential.FromStream( jsonStream );
         }
@@ -24,7 +30,7 @@ public class GcpServices : IGcpServices
             //2.-Ruta destino dentro del Bucket con el nombre del archivo 
             //3.-Tipo de recurso 
             //4.-Recurso
-            storageClient.UploadObject( logFile.GcpBucket, logFile.GcpFolder + "/" + logFile.FileName, logFile.FileType, fileStream);
+            await storageClient.UploadObjectAsync( logFile.GcpBucket, logFile.GcpFolder + "/" + logFile.FileName, logFile.FileType, fileStream);
         }
 
         // Lista de objetos en ruta bucket 
@@ -33,7 +39,7 @@ public class GcpServices : IGcpServices
             Console.WriteLine(obj.Name);
         }
 
-        // Download file
+        // no eliminar código es para descargar archivo
         /*using (var fileStream = File.Create("Program-copy.cs"))
         {
             storageClient.DownloadObject(bucketName, "Program.cs", fileStream);

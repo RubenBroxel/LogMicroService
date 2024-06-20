@@ -1,30 +1,43 @@
+
+using LogMicroService.Services.ServiceManager.Models;
+using System.Security.Claims;
+using LogMicroService.Services.DataBase.Contracts;
+//using LogMicroServices.Services.GCP;
+
 /*
     Author: Broxel 
     Date: May-09-2014
     Description: clase principal para funcionamiento del micro-servicio 
 */
-using System.Security.Claims;
-//using LogMicroServices.Services.GCP;
-
-
 public class ManagerService: IManager
 {
     private readonly IFileServices _fileServices;
     private readonly IGcpServices  _gcpServices;
     private readonly IJwtSecurity _jwtSecurity;
     private readonly IPermissionServices _permissionService;
-    
-    private readonly string MESSAGE_ERROR_FALTAL = "Upps!, Algo Orurrio...";
-    private readonly string MESSAGE_SUCCESS_OK   = "En hora buena! el Archivo llego a su destino";
-    private readonly string SECRET_BASE64_VALID  = "eyJhbGciOiJSUzI1NiIsImtpZCI6IlRlc3RDZXJ0IiwidHlwIjoiYXQrand0In0=";
+    private readonly ICommandService _commandService;
+    private readonly IConfiguration _configuration;
+    private readonly IGcpServices2 _gcpServices2;
 
 
-    public ManagerService(IFileServices fileServices, IGcpServices gcpServices, IJwtSecurity jwtSecurity, IPermissionServices permissionServices)
+    public ManagerService
+    (
+        IFileServices fileServices, 
+        IGcpServices gcpServices, 
+        IGcpServices2 gcpServices2,
+        IJwtSecurity jwtSecurity, 
+        IPermissionServices permissionServices,
+        ICommandService commandService,
+        IConfiguration configuration
+    )
     {
-        _fileServices = fileServices;
-        _gcpServices  = gcpServices;
-        _jwtSecurity = jwtSecurity;
+        _fileServices  = fileServices;
+        _gcpServices   = gcpServices;
+        _gcpServices2  = gcpServices2;
+        _jwtSecurity   = jwtSecurity;
         _permissionService = permissionServices;
+        _commandService    = commandService;
+        _configuration     = configuration;
     }
 
     /// <summary>
@@ -37,24 +50,22 @@ public class ManagerService: IManager
     /// <returns>MESSAGE_ERROR_FATAL</returns>
     public async Task<string> SendToBucketAsync(Stream fileStream, GcpLogFile gcpLogFile, LogFile logFile)
     {  
-            // Reemplaza con tus valores
-            //GcpLogger logger = new GcpLogger("crack-adapter-420721", "My-First-Project");
-            //GcpLogger logger = new GcpLogger(projectId, logName);
-
         try
         {
+            var mensaje = _configuration["KeySevice:GCP-ENV-LOG:GCP-DEV:LocalPath"]+ "LogMicroService/"  + gcpLogFile.FileLocalPath + "/" + gcpLogFile.FileName;
             string tempfile  = _fileServices.CreateTempfilePath(logFile.FileName,logFile.filePath);
             using var stream = File.OpenWrite(tempfile);
             await fileStream.CopyToAsync(stream);
             stream.Close();
-            await _gcpServices.SendToGcpBucketAsync(gcpLogFile);
+            await _gcpServices2.ReadLogFile( mensaje );
+            //await _gcpServices.SendToGcpBucketAsync(gcpLogFile);
             
-            return MESSAGE_SUCCESS_OK;
+            return _configuration["KeySevice:MessageService:SUCCES"] ?? String.Empty;
         }
         catch(Exception exception)
         {
-            Console.WriteLine(exception.Message.ToString(), ": ", MESSAGE_ERROR_FALTAL);
-            return MESSAGE_ERROR_FALTAL;
+            Console.WriteLine(exception.Message.ToString(), ": ",  _configuration["KeySevice:MessageService:FAILD"] ?? String.Empty);
+            return _configuration["KeySevice:MessageService:FAILD"] ?? String.Empty;
         } 
     }
 
@@ -64,8 +75,9 @@ public class ManagerService: IManager
     /// </summary>
     /// <param name="credentials"></param>
     /// <returns>Bool</returns>
-    public bool ValidateUser(AccountModelService credentials)
+    public async Task<bool> ValidateUser(AccountModelService credentials)
     {
+        await _commandService.SaveLogSessionCommandAsync(credentials);
         return _jwtSecurity.IsValidUser(credentials);
     }
 
@@ -77,11 +89,12 @@ public class ManagerService: IManager
     /// <returns>string</returns>
     public string GenerateToken(string userName)
     {
-         return _jwtSecurity.GenerateToken( userName, SECRET_BASE64_VALID);
+        var keys= _configuration["KeySevice:Key"] ?? String.Empty;
+         return _jwtSecurity.GenerateToken( userName, keys);
     }
 
     public ClaimsPrincipal ValidateAToken(string token)
     {
-         return _permissionService.GetPrincipal( token,  SECRET_BASE64_VALID);
+         return _permissionService.GetPrincipal( token, _configuration["KeySevice:Key"] ?? String.Empty);
     }
 }

@@ -1,5 +1,5 @@
+using LogMicroService.Services.ServiceManager.Models;
 using System.Security.Claims;
-using Microsoft.AspNetCore.DataProtection;
 public interface IJwtSecurity
 {
     string GenerateToken(string username, string secret);

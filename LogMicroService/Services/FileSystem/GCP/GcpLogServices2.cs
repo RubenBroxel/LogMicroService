@@ -1,59 +1,102 @@
+using LogMicroService.Services.ServiceManager.Models; 
 using Google.Cloud.Logging.V2;
-using System;
-using System.Threading.Tasks;
+using Google.Apis.Auth.OAuth2;
+using Google.Protobuf.WellKnownTypes;
+using Google.Api;
 
-namespace YourNamespace // Reemplaza con el namespace de tu proyecto
+namespace LogMicroService.Services.FileSystem.GCP; // Reemplaza con el namespace de tu proyecto
+
+/// <summary>
+/// Clase para escribir logs en Google Cloud Logging.
+/// </summary>
+public class GcpLogger: IGcpServices2
 {
+    IConfiguration _configuration;
+    private readonly LoggingServiceV2Client _loggingClient;
+    private readonly string _logName;
+    private readonly string _credentialPath;
+
     /// <summary>
-    /// Clase para escribir logs en Google Cloud Logging.
+    /// Constructor que utiliza la ruta al archivo JSON de credenciales.
     /// </summary>
-    public class GoogleCloudLogger
+    /// <param name="logName">Nombre del log en GCP Logging.</param>
+    /// <param name="credentialPath">Ruta al archivo JSON de credenciales de la cuenta de servicio.</param>
+    public GcpLogger( IConfiguration configuration )
     {
-        private readonly LoggingServiceV2Client _loggingClient;
-        private readonly string _logName;
-
-        /// <summary>
-        /// Inicializa una nueva instancia de la clase <see cref="GoogleCloudLogger"/>.
-        /// </summary>
-        /// <param name="projectId">El ID del proyecto de Google Cloud.</param>
-        /// <param name="logName">El nombre del log en Google Cloud Logging.</param>
-        public GoogleCloudLogger(string projectId, string logName)
+        _configuration = configuration;
+        _credentialPath = _configuration["KeySevice:GCP-ENV-LOG:GCP-DEV:LocalPath"] + "LogMicroService/" + _configuration["KeySevice:GCP-ENV-LOG:GCP-DEV:GcpCredential"];
+        _logName = _configuration["KeySevice:LogName"] ?? String.Empty;
+        // Configura las credenciales usando el archivo JSON
+        var credential = GoogleCredential.FromFile(_credentialPath);
+        _loggingClient = new LoggingServiceV2ClientBuilder
         {
-            _loggingClient = LoggingServiceV2Client.Create();
-            _logName = $"projects/{projectId}/logs/{logName}";
+            Credential = credential
+        }.Build();
+    }
+
+    /// <summary>
+    /// Lee el contenido de un archivo .log y lo extrae en una lista de strings, 
+    /// donde cada string representa una línea del archivo.
+    /// </summary>
+    /// <param name="filePath">La ruta del archivo .log a leer.</param>
+    /// <returns>Una lista de strings con el contenido del archivo.</returns>
+    public async Task ReadLogFile(string filePath)
+    {
+        //List<string> logContent = new List<string>();
+
+        // Verificar si el archivo existe
+        if (!File.Exists(filePath))
+        {
+            throw new FileNotFoundException("El archivo .log no se encontró en la ruta especificada.", filePath);
         }
 
-        /// <summary>
-        /// Escribe un mensaje de log en Google Cloud Logging.
-        /// </summary>
-        /// <param name="severity">La severidad del mensaje de log.</param>
-        /// <param name="message">El mensaje de log.</param>
-        /// <exception cref="ArgumentNullException">Se lanza si el mensaje es nulo o vacío.</exception>
-        public async Task WriteLogAsync(LogSeverity severity, string message)
+        // Leer el contenido del archivo línea por línea
+        using (StreamReader reader = new StreamReader(filePath))
         {
-            if (string.IsNullOrEmpty(message))
+            string line;
+            while ( (line = reader.ReadLine() ) != null)
             {
-                throw new ArgumentNullException(nameof(message), "El mensaje de log no puede ser nulo o vacío.");
+                //logContent.Add(line);
+                await WriteLogInfoAsync( line );
             }
+        }
+    }
 
-            try
+
+
+    /// <summary>
+    /// Envía un mensaje de log a GCP Logging.
+    /// </summary>
+    /// <param name="message">Mensaje de log.</param>
+    /// <param name="severity">Severidad del log (opcional, por defecto: Info).</param>
+    private async Task WriteLogInfoAsync(string message, LogSeverity severity = LogSeverity.Info)
+    {
+        try
+        {
+            var logEntry = new LogEntry
             {
-                var logEntry = new LogEntry
+
+                Resource = new MonitoredResource
                 {
-                    Severity = Google.Cloud.Logging.Type.LogSeverity.Info,
-                    TextPayload = message
-                };
-
-                await _loggingClient.WriteLogEntriesAsync(_logName, null, null, new[] { logEntry });
-            }
-            catch (Exception ex)
-            {
-                // Manejo de errores. Puedes registrar la excepción en un archivo local, 
-                // enviarla a un servicio de monitoreo, etc.
-                Console.WriteLine($"Error al escribir en Google Cloud Logging: {ex}"); 
-                // Considera lanzar la excepción nuevamente si necesitas detener la ejecución del programa.
-                // throw; 
-            }
+                    Type = "global", // Tipo de recurso (por ejemplo, "global", "gce_instance", etc.)
+                    Labels =
+                    {
+                        //{ "project_id", "tu-proyecto-gcp" }
+                        { "project_id",_configuration["KeySevice:ProjectId"] }
+                    }
+                },
+                Severity = Google.Cloud.Logging.Type.LogSeverity.Info,
+                TextPayload = message,
+                Timestamp = Timestamp.FromDateTime(DateTime.UtcNow)
+            };
+                                                                                            //"your-project-id"
+            var logName = new LogName(_configuration["KeySevice:ProjectId"] ?? String.Empty, _logName);  
+            _loggingClient.WriteLogEntries(logName, null, null, new[] { logEntry });
         }
+        catch(Exception ex)
+        {
+            Console.WriteLine(ex.Message.ToString());
+        }
+
     }
 }
