@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Google.Protobuf.WellKnownTypes;
 using Microsoft.EntityFrameworkCore;
 
 namespace LogMicroService.Services.ServiceManager.ModelViews;
@@ -18,7 +19,21 @@ public partial class LogMicroServiceSessionsContext : DbContext
     public virtual DbSet<LogServiceSession> LogServiceSessions { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    => optionsBuilder.UseSqlServer("Server=10.100.8.2; TrustServerCertificate=True; Encrypt=false; User ID=sa;Password=Az19882009; Initial Catalog=LogMicroServiceSessions;");
+    {
+        var builder = new ConfigurationBuilder()
+                              .SetBasePath(Directory.GetCurrentDirectory())
+                              .AddJsonFile("appsettings.json");
+        var config = builder.Build();
+        var connectionString = config.GetConnectionString("LogMicroService");
+
+        if (!optionsBuilder.IsConfigured)
+        {
+            //#warning To protect potentially sensitive information in your connection string, you should move it out of source code. See http://go.microsoft.com/fwlink/?LinkId=723263 for guidance on storing connection strings.
+            optionsBuilder.UseSqlServer(connectionString);
+        }
+    }
+    //=> optionsBuilder.UseSqlServer("Server=10.100.8.2; TrustServerCertificate=True; Encrypt=false; User ID=sa;Password=Az19882009; Initial Catalog=LogMicroServiceSessions;");
+    
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

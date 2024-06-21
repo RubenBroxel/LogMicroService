@@ -1,6 +1,4 @@
 namespace LogMicroService.Services.ServiceManager.Models;
-
-
 /// <summary>
 /// Nivel de severidad para los logs.
 /// </summary>

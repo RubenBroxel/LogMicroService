@@ -3,13 +3,14 @@ using Google.Cloud.Logging.V2;
 using Google.Apis.Auth.OAuth2;
 using Google.Protobuf.WellKnownTypes;
 using Google.Api;
+using Microsoft.AspNetCore.Http;
 
 namespace LogMicroService.Services.FileSystem.GCP; // Reemplaza con el namespace de tu proyecto
 
 /// <summary>
 /// Clase para escribir logs en Google Cloud Logging.
 /// </summary>
-public class GcpLogger: IGcpServices2
+public class GcpLogger: IGcpServices
 {
     IConfiguration _configuration;
     private readonly LoggingServiceV2Client _loggingClient;
@@ -24,8 +25,8 @@ public class GcpLogger: IGcpServices2
     public GcpLogger( IConfiguration configuration )
     {
         _configuration = configuration;
-        _credentialPath = _configuration["KeySevice:GCP-ENV-LOG:GCP-DEV:LocalPath"] + "LogMicroService/" + _configuration["KeySevice:GCP-ENV-LOG:GCP-DEV:GcpCredential"];
-        _logName = _configuration["KeySevice:LogName"] ?? String.Empty;
+        _credentialPath = Directory.GetCurrentDirectory() + "/" + _configuration["LogSevice:GCP-ENV-LOG:GCP-LOG:GcpCredential"];
+        _logName = _configuration["LogSevice:GCP-ENV-LOG:GCP-LOG:LogName"] ?? String.Empty;
         // Configura las credenciales usando el archivo JSON
         var credential = GoogleCredential.FromFile(_credentialPath);
         _loggingClient = new LoggingServiceV2ClientBuilder
@@ -49,15 +50,25 @@ public class GcpLogger: IGcpServices2
         {
             throw new FileNotFoundException("El archivo .log no se encontró en la ruta especificada.", filePath);
         }
-
         // Leer el contenido del archivo línea por línea
         using (StreamReader reader = new StreamReader(filePath))
         {
-            string line;
-            while ( (line = reader.ReadLine() ) != null)
+            string? line;
+            while ((line = await reader.ReadLineAsync()) != null)
             {
+                if ( 
+                    string.IsNullOrWhiteSpace(line) || 
+                   ( line.StartsWith("--") && line.EndsWith("--") && Guid.TryParse(line.Trim('-'), out _ )) ||
+                   ( line.StartsWith("--") && Guid.TryParse(line.Trim('-'), out _ )) ||
+                   line.StartsWith("Content-Disposition")  
+
+                ) 
+                {
+                    continue;
+                }
+                
                 //logContent.Add(line);
-                await WriteLogInfoAsync( line );
+                await WriteLogInfoAsync(line);
             }
         }
     }
@@ -75,27 +86,29 @@ public class GcpLogger: IGcpServices2
         {
             var logEntry = new LogEntry
             {
-
                 Resource = new MonitoredResource
                 {
                     Type = "global", // Tipo de recurso (por ejemplo, "global", "gce_instance", etc.)
                     Labels =
                     {
                         //{ "project_id", "tu-proyecto-gcp" }
-                        { "project_id",_configuration["KeySevice:ProjectId"] }
-                    }
+                        { "project_id",_configuration["LogSevice:GCP-ENV-LOG:GCP-LOG:ProjectId"] }
+                        
+                    }  
                 },
+                
                 Severity = Google.Cloud.Logging.Type.LogSeverity.Info,
                 TextPayload = message,
-                Timestamp = Timestamp.FromDateTime(DateTime.UtcNow)
+                Timestamp = Timestamp.FromDateTime(DateTime.UtcNow),
             };
                                                                                             //"your-project-id"
-            var logName = new LogName(_configuration["KeySevice:ProjectId"] ?? String.Empty, _logName);  
-            _loggingClient.WriteLogEntries(logName, null, null, new[] { logEntry });
+            var logName = new LogName(_configuration["LogSevice:GCP-ENV-LOG:GCP-LOG:ProjectId"] ?? String.Empty, _logName);  
+            await _loggingClient.WriteLogEntriesAsync(logName, null, null, new[] { logEntry });
         }
         catch(Exception ex)
         {
             Console.WriteLine(ex.Message.ToString());
+            throw;
         }
 
     }

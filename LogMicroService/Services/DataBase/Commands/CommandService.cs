@@ -5,10 +5,10 @@ using LogMicroService.Services.DataBase.Contracts;
 namespace LogMicroService.Services.DataBase.Commands;
 public class CommandService: ICommandService
 {
-    private readonly LogMicroServiceSessionsContext _context;
-    public CommandService(LogMicroServiceSessionsContext context)
+    //private readonly LogMicroServiceSessionsContext _context;
+    public CommandService()//LogMicroServiceSessionsContext context)
     {
-        _context = context;
+       // _context = context;
     }
 
     public async Task SaveLogSessionCommandAsync(AccountModelService account)
@@ -29,34 +29,15 @@ public class CommandService: ICommandService
                 UserSession     = 1,
             };
 
-            _context.Set<LogServiceSession>().Add(catalogItem);
-            await _context.SaveChangesAsync(); // Guarda los cambios de forma asíncrona
+            using (var db = new LogMicroServiceSessionsContext())
+            {
+                var customers = db.Set<LogServiceSession>().Add(catalogItem);
+                await db.SaveChangesAsync();
+            }
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex.ToString()); // Muestra información detallada de la excepción
-            // Manejo de errores, como registrar la excepción en un archivo o base de datos
+            Console.WriteLine(ex.ToString());
         }
     }
-
-
-    public async Task SaveLogFileCommand( GcpLogFile2 file )
-    {
-        long filesize = 0;
-        /*var catalogItem = new LogFileStorage() 
-        { 
-            //Idlogfile = "",
-            //Idsession = "",
-            Logfilename = file.FileName ?? "",
-            Logfilesize = filesize,
-            Gcpinstance = file.GcpProject,
-            Gcpidproject = file.Gcpidproject,
-            //Uploadstarttime = ,
-
-        };*/
-        //await _context.AddAsync(catalogItem);
-        //await _context.SaveChangesAsync();
-    }
-
-
 }

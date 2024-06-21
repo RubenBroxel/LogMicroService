@@ -10,13 +10,11 @@ public class GcpLogFile
     //Nombre del Archivo
     public string? FileName      { get; set; }
     //Tipo de archivo que se subira al Bucket
-    public string? FileType      { get; set; } = null;
+    public string? FileType      { get; set; }
     //Ubicación local de almacenamiento del microservicio
-    public string? FileLocalPath { get; set; } = null;
+    public string? FileLocalPath { get; set; } 
     //Nombre del Bucket en GCP
-    public string? GcpBucket     { get; set; } = null;
-    //Ruta o Nombre del archivo que contenga las credenciales de GCP
-    public string? GcpCredential { get; set; } = null;
+    public string? GcpCredential { get; set; }
     //Nombre del Folder dentro del Bucket de GCP
-    public string? GcpFolder     { get; set; } = null;
+    public string? GcpFolder     { get; set; }
 }
