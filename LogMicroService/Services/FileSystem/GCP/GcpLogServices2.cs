@@ -4,6 +4,7 @@ using Google.Apis.Auth.OAuth2;
 using Google.Protobuf.WellKnownTypes;
 using Google.Api;
 using Microsoft.AspNetCore.Http;
+using System.Diagnostics;
 
 namespace LogMicroService.Services.FileSystem.GCP; // Reemplaza con el namespace de tu proyecto
 
@@ -82,6 +83,7 @@ public class GcpLogger: IGcpServices
     /// <param name="severity">Severidad del log (opcional, por defecto: Info).</param>
     private async Task WriteLogInfoAsync(string message, LogSeverity severity = LogSeverity.Info)
     {
+        //var s = context.WithValue(c.Context(), logging.TraceId{}, c.Get("X-Cloud-Trace-Context"));
         try
         {
             var logEntry = new LogEntry
@@ -96,7 +98,10 @@ public class GcpLogger: IGcpServices
                         
                     }  
                 },
-                
+                Labels =
+                {
+                    { "correlationId", "" } // Agrega el CorrelationId como una etiqueta
+                },
                 Severity = Google.Cloud.Logging.Type.LogSeverity.Info,
                 TextPayload = message,
                 Timestamp = Timestamp.FromDateTime(DateTime.UtcNow),

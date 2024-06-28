@@ -97,6 +97,7 @@ public class JwtService : IJwtSecurity
 
         // Validar las propiedades del modelo de credenciales
         return credentials.AppService == "Fintech.Logger.Services.Account" &&
+               !string.IsNullOrEmpty(credentials.AppUser) &&
                !string.IsNullOrEmpty(credentials.AppToken) &&
                !string.IsNullOrEmpty(credentials.AppBuild) &&
                !string.IsNullOrEmpty(credentials.AppPackage) &&

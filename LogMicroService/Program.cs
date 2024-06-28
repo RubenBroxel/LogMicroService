@@ -31,7 +31,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.MapGet("/health", async (HttpContext context) => await context.Response.WriteAsync("Ok")).ShortCircuit();
+app.MapGet("/health", () => Results.Ok("OK")).ShortCircuit();
 
 app.UseHttpsRedirection();
 

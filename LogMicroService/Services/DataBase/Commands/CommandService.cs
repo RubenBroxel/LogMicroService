@@ -5,11 +5,6 @@ using LogMicroService.Services.DataBase.Contracts;
 namespace LogMicroService.Services.DataBase.Commands;
 public class CommandService: ICommandService
 {
-    //private readonly LogMicroServiceSessionsContext _context;
-    public CommandService()//LogMicroServiceSessionsContext context)
-    {
-       // _context = context;
-    }
 
     public async Task SaveLogSessionCommandAsync(AccountModelService account)
     {
@@ -26,7 +21,7 @@ public class CommandService: ICommandService
                 LocationSession = account.AppLocation,
                 CountrySession  = account.AppCountry,
                 DateSession     = DateTime.Today,
-                UserSession     = 1,
+                UserSession     = Convert.ToInt32(account.AppUser),
             };
 
             using (var db = new LogMicroServiceSessionsContext())
