@@ -38,6 +38,7 @@ app.UseHttpsRedirection();
 app.MapPost("api/logservice", async ( Stream logFile, HttpContext httpContext, IManager manager) =>
 {
     var token = httpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+    var Correlation = httpContext.Request.Headers["Custom-Correlation-ID"].ToString().Replace("Custom-Correlation-ID", "");
     var validattion = manager.ValidateAToken(token);
     
     // Verifica si el token es válido
@@ -50,7 +51,7 @@ app.MapPost("api/logservice", async ( Stream logFile, HttpContext httpContext, I
         gcpLogFile.FileLocalPath = principal+"/"+user;
         gcpLogFile.FileName      = tempFile.FileName;
 
-        await manager.SendToBucketAsync(logFile,gcpLogFile,tempFile);
+        await manager.SendToBucketAsync(logFile,gcpLogFile,tempFile, Correlation);
         // Accede a los datos seguros
         var username = validattion?.Identity?.Name;
         return Results.Ok($"Hola, {username}! El archivo subio con éxito.");

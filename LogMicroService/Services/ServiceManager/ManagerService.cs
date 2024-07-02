@@ -37,7 +37,7 @@ public class ManagerService: IManager
     /// <param name="gcpLogFile">Objeto GcpLogFile con la información del archivo en Google Cloud Storage.</param>
     /// <param name="logFile">Objeto LogFile con la información del archivo.</param>
     /// <returns>Una cadena de texto con el mensaje de éxito o error.</returns>
-    public async Task<string> SendToBucketAsync(Stream fileStream, GcpLogFile gcpLogFile, LogFile logFile)
+    public async Task<string> SendToBucketAsync(Stream fileStream, GcpLogFile gcpLogFile, LogFile logFile, string correlation)
     {  
         try
         {
@@ -50,7 +50,7 @@ public class ManagerService: IManager
             using var stream    = File.OpenWrite(tempfile);
             await fileStream.CopyToAsync(stream);
             stream.Close();
-            await _gcpServices2.ReadLogFile( fileContainer );
+            await _gcpServices2.ReadLogFile( fileContainer , correlation);
             File.Delete(tempfile);
             
             return _configuration["LogSevice:MessageService:SUCCES"] ?? String.Empty;

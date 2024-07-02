@@ -42,7 +42,7 @@ public class GcpLogger: IGcpServices
     /// </summary>
     /// <param name="filePath">La ruta del archivo .log a leer.</param>
     /// <returns>Una lista de strings con el contenido del archivo.</returns>
-    public async Task ReadLogFile(string filePath)
+    public async Task ReadLogFile(string filePath, string correlation)
     {
         //List<string> logContent = new List<string>();
 
@@ -69,7 +69,7 @@ public class GcpLogger: IGcpServices
                 }
                 
                 //logContent.Add(line);
-                await WriteLogInfoAsync(line);
+                await WriteLogInfoAsync(line, correlation);
             }
         }
     }
@@ -81,7 +81,7 @@ public class GcpLogger: IGcpServices
     /// </summary>
     /// <param name="message">Mensaje de log.</param>
     /// <param name="severity">Severidad del log (opcional, por defecto: Info).</param>
-    private async Task WriteLogInfoAsync(string message, LogSeverity severity = LogSeverity.Info)
+    private async Task WriteLogInfoAsync(string message, string correlation, LogSeverity severity = LogSeverity.Info)
     {
         //var s = context.WithValue(c.Context(), logging.TraceId{}, c.Get("X-Cloud-Trace-Context"));
         try
@@ -95,12 +95,11 @@ public class GcpLogger: IGcpServices
                     {
                         //{ "project_id", "tu-proyecto-gcp" }
                         { "project_id",_configuration["LogSevice:GCP-ENV-LOG:GCP-LOG:ProjectId"] }
-                        
                     }  
                 },
                 Labels =
                 {
-                    { "correlationId", "" } // Agrega el CorrelationId como una etiqueta
+                    { "correlationId", correlation } // Agrega el CorrelationId como una etiqueta
                 },
                 Severity = Google.Cloud.Logging.Type.LogSeverity.Info,
                 TextPayload = message,

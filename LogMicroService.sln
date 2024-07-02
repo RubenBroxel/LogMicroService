@@ -5,8 +5,6 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LogMicroService", "LogMicroService\LogMicroService.csproj", "{CA325971-E46D-471A-910D-67C590531E66}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LogServices", "LogServices\LogServices.csproj", "{139A92C8-BDFE-4B7D-A5B7-8E717BC0A6F7}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

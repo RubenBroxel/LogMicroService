@@ -3,7 +3,7 @@ using LogMicroService.Services.ServiceManager.Models;
 public interface IGcpServices
 {
 
-    Task ReadLogFile(string filePath);
+    Task ReadLogFile(string filePath, string correlation);
     /// <summary>
     /// Envía un archivo de registro a Google Cloud Logging.
     /// </summary>

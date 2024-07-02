@@ -17,4 +17,5 @@ public class GcpLogFile
     public string? GcpCredential { get; set; }
     //Nombre del Folder dentro del Bucket de GCP
     public string? GcpFolder     { get; set; }
+    
 }
